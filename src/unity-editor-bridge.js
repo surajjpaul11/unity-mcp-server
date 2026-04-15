@@ -1662,7 +1662,7 @@ export async function getProjectContext(category = null) {
 
   const response = await bridgeFetch(url, {
     method: "GET",
-    headers: { "X-Agent-Id": _currentAgentId, ...hostHeaders() },
+    headers: { "X-Agent-Id": _currentAgentId },
     signal: AbortSignal.timeout(5000),
   });
 
