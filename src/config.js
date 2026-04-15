@@ -22,6 +22,8 @@ export const CONFIG = {
   editorBridgeHost: process.env.UNITY_BRIDGE_HOST || "127.0.0.1",
   editorBridgePort: parseInt(process.env.UNITY_BRIDGE_PORT || "7890"),
   editorBridgeTimeout: parseInt(process.env.UNITY_BRIDGE_TIMEOUT || "60000"),
+  // Override the Host header sent to the bridge (for Docker containers connecting via host.docker.internal)
+  editorBridgeHostHeader: process.env.UNITY_BRIDGE_HOST_HEADER || "",
 
   // Multi-instance support
   portRangeStart: parseInt(process.env.UNITY_PORT_RANGE_START || "7890"),

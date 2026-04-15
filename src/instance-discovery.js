@@ -8,6 +8,7 @@
 import { readFileSync } from "fs";
 import { CONFIG } from "./config.js";
 import { debugLog } from "./state-persistence.js";
+import { bridgeFetch } from "./bridge-fetch.js";
 
 // ─── Per-Agent Session State ───
 // Tracks which Unity instance each agent is targeting.
@@ -462,7 +463,7 @@ function readRegistryFile() {
 async function pingInstance(port) {
   try {
     const url = `http://${CONFIG.editorBridgeHost}:${port}/api/ping`;
-    const response = await fetch(url, {
+    const response = await bridgeFetch(url, {
       method: "GET",
       signal: AbortSignal.timeout(1500), // Short timeout for discovery
     });
@@ -480,7 +481,7 @@ async function pingInstance(port) {
 async function getInstanceInfo(port) {
   try {
     const url = `http://${CONFIG.editorBridgeHost}:${port}/api/ping`;
-    const response = await fetch(url, {
+    const response = await bridgeFetch(url, {
       method: "GET",
       signal: AbortSignal.timeout(2000),
     });

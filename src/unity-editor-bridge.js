@@ -3,6 +3,7 @@
 // Supports both queue mode (async ticket-based) and legacy sync mode
 import { CONFIG } from "./config.js";
 import { getActiveBridgeUrl } from "./instance-discovery.js";
+import { bridgeFetch } from "./bridge-fetch.js";
 
 // Dynamic bridge URL â€" resolved per-call based on selected instance
 function getBridgeUrl() {
@@ -14,6 +15,7 @@ const BRIDGE_URL = `http://${CONFIG.editorBridgeHost}:${CONFIG.editorBridgePort}
 
 // Agent identity â€" tracks which AI agent is making requests
 let _currentAgentId = "default";
+
 
 // Mode detection â€" cached to avoid repeated 404 checks
 let _useQueueMode = true;
@@ -68,7 +70,7 @@ function isTransientError(error, response) {
 async function submitToQueue(apiPath, bodyString) {
   const url = `${getBridgeUrl()}/api/queue/submit`;
 
-  const response = await fetch(url, {
+  const response = await bridgeFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -117,11 +119,11 @@ async function pollQueueStatus(ticketId) {
     // Poll status
     try {
       const url = `${getBridgeUrl()}/api/queue/status?ticketId=${ticketId}`;
-      const response = await fetch(url, {
+      const response = await bridgeFetch(url, {
         method: "GET",
         headers: {
           "X-Agent-Id": _currentAgentId,
-        },
+            },
         signal: AbortSignal.timeout(10000), // 10s per individual poll request
       });
 
@@ -191,12 +193,12 @@ async function sendCommandLegacyMode(command, params = {}) {
     const timeout = setTimeout(() => controller.abort(), CONFIG.editorBridgeTimeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await bridgeFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Agent-Id": _currentAgentId,
-        },
+            },
         body: JSON.stringify(params),
         signal: controller.signal,
       });
@@ -348,11 +350,11 @@ export async function sendCommand(command, params = {}) {
 export async function getQueueInfo() {
   try {
     const url = `${getBridgeUrl()}/api/queue/info`;
-    const response = await fetch(url, {
+    const response = await bridgeFetch(url, {
       method: "GET",
       headers: {
         "X-Agent-Id": _currentAgentId,
-      },
+        },
       signal: AbortSignal.timeout(CONFIG.editorBridgeTimeout),
     });
 
@@ -378,11 +380,11 @@ export async function getQueueInfo() {
 export async function getTicketStatus(ticketId) {
   try {
     const url = `${getBridgeUrl()}/api/queue/status?ticketId=${ticketId}`;
-    const response = await fetch(url, {
+    const response = await bridgeFetch(url, {
       method: "GET",
       headers: {
         "X-Agent-Id": _currentAgentId,
-      },
+        },
       signal: AbortSignal.timeout(CONFIG.editorBridgeTimeout),
     });
 
@@ -406,7 +408,7 @@ export async function getTicketStatus(ticketId) {
  */
 export async function ping() {
   try {
-    const response = await fetch(`${getBridgeUrl()}/api/ping`, {
+    const response = await bridgeFetch(`${getBridgeUrl()}/api/ping`, {
       method: "GET",
       signal: AbortSignal.timeout(3000),
     });
@@ -1658,9 +1660,9 @@ export async function getProjectContext(category = null) {
     ? `${getBridgeUrl()}/api/context/${encodeURIComponent(category)}`
     : `${getBridgeUrl()}/api/context`;
 
-  const response = await fetch(url, {
+  const response = await bridgeFetch(url, {
     method: "GET",
-    headers: { "X-Agent-Id": _currentAgentId },
+    headers: { "X-Agent-Id": _currentAgentId, ...hostHeaders() },
     signal: AbortSignal.timeout(5000),
   });
 
