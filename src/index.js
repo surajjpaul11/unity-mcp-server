@@ -2,12 +2,25 @@
 
 // Guard stdout: stdio MCP transport uses stdout for JSON-RPC framing.
 // Any non-JSON output on stdout (from dependencies, Node warnings, etc.)
-// will corrupt the transport and disconnect the client. Redirect console.log
-// and console.warn to stderr so only the MCP SDK writes to stdout.
-const _origLog = console.log;
-const _origWarn = console.warn;
-console.log = (...args) => console.error("[stdout→stderr]", ...args);
-console.warn = (...args) => process.stderr.write(`[warn] ${args.join(" ")}\n`);
+// will corrupt the transport and disconnect the client.
+//
+// Intercept process.stdout.write itself — console.log redirection alone
+// isn't enough because libraries can call process.stdout.write directly.
+// Only allow writes that look like JSON-RPC messages (start with '{').
+const _origStdoutWrite = process.stdout.write.bind(process.stdout);
+process.stdout.write = function(chunk, encoding, callback) {
+  const str = typeof chunk === "string" ? chunk : chunk.toString();
+  // Allow JSON-RPC messages through (they start with '{' or are newlines)
+  if (str.startsWith("{") || str.trim() === "") {
+    return _origStdoutWrite(chunk, encoding, callback);
+  }
+  // Redirect everything else to stderr
+  process.stderr.write(`[stdout→stderr] ${str}`);
+  if (typeof callback === "function") callback();
+  return true;
+};
+console.log = (...args) => console.error("[log]", ...args);
+console.warn = (...args) => console.error("[warn]", ...args);
 
 // AnkleBreaker Unity MCP Server — Main entry point
 // Provides tools for Unity Hub management and Unity Editor control via MCP protocol
