@@ -23,12 +23,19 @@ export function bridgeFetch(url, options = {}) {
     }, (res) => {
       let data = "";
       res.on("data", (chunk) => data += chunk);
+      res.on("error", reject);
       res.on("end", () => {
         resolve({
           ok: res.statusCode >= 200 && res.statusCode < 300,
           status: res.statusCode,
           text: () => Promise.resolve(data),
-          json: () => Promise.resolve(JSON.parse(data)),
+          json: () => {
+            try {
+              return Promise.resolve(JSON.parse(data));
+            } catch (e) {
+              return Promise.reject(e);
+            }
+          },
         });
       });
     });

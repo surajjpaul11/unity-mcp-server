@@ -523,6 +523,15 @@ async function main() {
   );
 }
 
+// Catch unhandled errors to prevent silent crashes (especially in Docker)
+process.on("unhandledRejection", (reason) => {
+  console.error("[MCP] Unhandled promise rejection:", reason);
+});
+process.on("uncaughtException", (error) => {
+  console.error("[MCP] Uncaught exception:", error);
+  process.exit(1);
+});
+
 main().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
